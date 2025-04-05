@@ -1,11 +1,11 @@
 package com.example.cabfinder.controllers;
 
-
 import com.example.cabfinder.Requests.CreateCabRequest;
+import com.example.cabfinder.Requests.UpdateCabRequest;
 import com.example.cabfinder.Response.CabResponse;
 import com.example.cabfinder.Response.CreateCabResponse;
-import com.example.cabfinder.Response.GetUserByIdResponse;
-import com.example.cabfinder.models.Cab;
+import com.example.cabfinder.Response.SimpleApiResponse;
+import com.example.cabfinder.Response.UpdateCabResponse;
 import com.example.cabfinder.service.CabService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +18,37 @@ public class CabController {
     @Autowired
     private CabService service;
 
+    // GET: Fetch cab by ID
     @GetMapping("/{id}")
     public ResponseEntity<CabResponse> findCab(@PathVariable Long id) {
         return service.findCabById(id);
     }
 
-    @PostMapping("{id}/add-cab")
-    public ResponseEntity<CreateCabResponse> addCab(@PathVariable long id, @RequestBody CreateCabRequest request){
-        return service.addCab(id,request);
+    // POST: Add a cab (only if user is an owner)
+    @PostMapping("/{userId}/add-cab")
+    public ResponseEntity<CreateCabResponse> addCab(
+            @PathVariable long userId,
+            @RequestBody CreateCabRequest request
+    ) {
+        return service.addCab(userId, request);
+    }
+
+    // PUT: Update cab (ownership check included)
+    @PutMapping("/{userId}/{cabId}/update-cab")
+    public ResponseEntity<UpdateCabResponse> updateCab(
+            @PathVariable Long userId,
+            @PathVariable Long cabId,
+            @RequestBody UpdateCabRequest request
+    ) {
+        return service.updateCab(userId, cabId, request);
+    }
+
+    // DELETE: Delete cab (only by owner)
+    @DeleteMapping("/{userId}/{cabId}/delete-cab")
+    public ResponseEntity<SimpleApiResponse> deleteCab(
+            @PathVariable Long userId,
+            @PathVariable Long cabId
+    ) {
+        return service.deleteCab(userId, cabId);
     }
 }
