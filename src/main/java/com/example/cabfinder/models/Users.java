@@ -1,5 +1,6 @@
 package com.example.cabfinder.models;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class Users {
     private String password;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Cab> cabs;
 
     public Users() {}

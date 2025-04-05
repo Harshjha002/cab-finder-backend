@@ -1,5 +1,6 @@
 package com.example.cabfinder.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,7 +11,6 @@ public class Cab {
     private Long id;
 
     private String model;
-
     private int seatCapacity;
 
     @Enumerated(EnumType.STRING)
@@ -18,10 +18,12 @@ public class Cab {
 
     private double farePerKm;
     private double farePerDay;
-    private boolean availability;
+
+    private boolean availability = false; // default to false
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
+    @JsonBackReference
     private Users owner;
 
     // No-args constructor
@@ -88,7 +90,7 @@ public class Cab {
         this.farePerDay = farePerDay;
     }
 
-    public boolean isAvailability() {
+    public boolean getAvailability() {
         return availability;
     }
 
@@ -102,5 +104,19 @@ public class Cab {
 
     public void setOwner(Users owner) {
         this.owner = owner;
+    }
+
+    @Override
+    public String toString() {
+        return "Cab{" +
+                "id=" + id +
+                ", model='" + model + '\'' +
+                ", seatCapacity=" + seatCapacity +
+                ", type=" + type +
+                ", farePerKm=" + farePerKm +
+                ", farePerDay=" + farePerDay +
+                ", availability=" + availability +
+                ", ownerId=" + (owner != null ? owner.getId() : null) +
+                '}';
     }
 }
