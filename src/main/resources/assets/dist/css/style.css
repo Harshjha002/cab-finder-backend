@@ -1,0 +1,56 @@
+/* Basic page style */
+body {
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Button style */
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  #bookNowBtn {
+    margin: 20px;
+  }
+  
+  /* Modal Popup styles */
+  .popup {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 300px;
+  }
+  
+  .popup-buttons {
+    margin-top: 20px;
+  }
+  
+  .popup-buttons button {
+    margin: 10px;
+  }
+  
+  #modifyBtn, #bookBtn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  #modifyBtn:hover, #bookBtn:hover {
+    background-color: #45a049;
+  }
+  

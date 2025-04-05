@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context path="/cabfinder" docBase="cabfinder-0.0.1-SNAPSHOT" reloadable="true">
+    <!-- Add any additional configuration like data source, session timeout, etc. -->
+</Context>
