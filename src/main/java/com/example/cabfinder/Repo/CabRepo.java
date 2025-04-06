@@ -23,4 +23,13 @@ public interface CabRepo extends JpaRepository<Cab,Long> {
 //                         @Param("maxFarePerKm") Double maxFarePerKm,
 //                         @Param("maxFarePerDay") Double maxFarePerDay);
 
+//    @Query("SELECT c FROM Cab c WHERE LOWER(c.owner.location) LIKE LOWER(CONCAT('%', :location, '%'))")
+//    List<Cab> searchByOwnerLocation(@Param("location") String location);
+
+
+
+    List<Cab> findByOwner_LocationIgnoreCase(String location);
+
+
+
 }

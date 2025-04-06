@@ -165,5 +165,37 @@ public class CabService {
     }
 
 
+    public ResponseEntity<List<CabResponse>> getByLocation(String location) {
+        List<Cab> cabs = repo.findByOwner_LocationIgnoreCase(location);
+
+//        List<Cab> cabs = repo.findByOwner_LocationIgnoreCase("New York");
+
+        List<Cab> allCabs = repo.findAll();
+        for (Cab c : allCabs) {
+            System.out.println("Cab: " + c.getModel() + " | Owner location: [" + c.getOwner().getLocation() + "]");
+        }
+
+
+        List<CabResponse> responses = cabs.stream()
+                .map(cab -> new CabResponse(
+                        cab.getId(),
+                        cab.getModel(),
+                        cab.getSeatCapacity(),
+                        cab.getType(),
+                        cab.getFarePerKm(),
+                        cab.getFarePerDay(),
+                        cab.getAvailability(),
+                        new CabResponse.OwnerInfo(
+                                cab.getOwner().getId(),
+                                cab.getOwner().getUsername(),
+                                cab.getOwner().getEmail(),
+                                cab.getOwner().getPhone(),
+                                cab.getOwner().getLocation()
+                        )
+                ))
+                .toList();
+
+        return ResponseEntity.ok(responses);
+    }
 
 }

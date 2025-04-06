@@ -6,13 +6,17 @@ import com.example.cabfinder.Response.CabResponse;
 import com.example.cabfinder.Response.CreateCabResponse;
 import com.example.cabfinder.Response.SimpleApiResponse;
 import com.example.cabfinder.Response.UpdateCabResponse;
+import com.example.cabfinder.models.Cab;
 import com.example.cabfinder.service.CabService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/cab")
+@CrossOrigin("http://localhost:5173/")
 public class CabController {
 
     @Autowired
@@ -51,4 +55,11 @@ public class CabController {
     ) {
         return service.deleteCab(userId, cabId);
     }
+    @GetMapping("/search")
+    public ResponseEntity<List<CabResponse>> findByLocation(@RequestParam String location) {
+        location = location.trim(); // just in case
+        System.out.println("Searching cabs by location: [" + location + "]");
+        return service.getByLocation(location);
+    }
+
 }
