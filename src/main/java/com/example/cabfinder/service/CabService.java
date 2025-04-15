@@ -13,22 +13,15 @@ import com.example.cabfinder.models.Cab;
 import com.example.cabfinder.models.Image;
 import com.example.cabfinder.models.Users;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
+/**
+ * Service class that handles all business logic related to Cab operations.
+ * Includes creating, updating, deleting, and retrieving cab information.
+ */
 @Service
 public class CabService {
 
@@ -41,72 +34,25 @@ public class CabService {
     @Autowired
     private ImageRepo imgRepo;
 
-//    public ResponseEntity<CreateCabResponse> addCab(Long userId, CreateCabRequest request, List<MultipartFile> images) {
-//        Optional<Users> optionalUser = userRepo.findById(userId);
-//
-//        if (optionalUser.isEmpty()) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-//                    .body(new CreateCabResponse("User not found", null));
-//        }
-//
-//        Users user = optionalUser.get();
-//
-//        if (!user.isOwner()) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                    .body(new CreateCabResponse("User is not an owner", null));
-//        }
-//
-//        Cab cab = new Cab();
-//        cab.setModel(request.getModel());
-//        cab.setSeatCapacity(request.getSeatCapacity());
-//        cab.setType(request.getType());
-//        cab.setFarePerKm(request.getFarePerKm());
-//        cab.setFarePerDay(request.getFarePerDay());
-//        cab.setAvailability(false);
-//        cab.setOwner(user);
-//
-//        Cab savedCab = repo.save(cab);
-//
-//        if (images != null && !images.isEmpty()) {
-//            String uploadDir = "uploads/cabs/" + savedCab.getId() + "/";
-//            try {
-//                Files.createDirectories(Paths.get(uploadDir));
-//
-//                for (MultipartFile file : images) {
-//                    String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-//                    Path path = Paths.get(uploadDir + fileName);
-//                    Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-//
-//                    Image cabImage = new Image();
-//                    cabImage.setFilePath(path.toString());
-//                    cabImage.setCab(savedCab);
-//
-//                    imgRepo.save(cabImage);
-//                }
-//            } catch (IOException e) {
-//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                        .body(new CreateCabResponse("Cab created, but image upload failed", savedCab.getId()));
-//            }
-//        }
-//
-//        return ResponseEntity.ok(
-//                new CreateCabResponse("Cab created successfully", savedCab.getId())
-//        );
-//    }
-
+    /**
+     * Creates a new cab for a given owner.
+     * Validates if user exists and is an owner before creating the cab.
+     *
+     * @param id      User ID of the cab owner
+     * @param request Cab creation request payload
+     * @return ResponseEntity with cab creation status and ID
+     */
     public ResponseEntity<CreateCabResponse> addCab(long id, CreateCabRequest request) {
         Optional<Users> optionalUser = userRepo.findById(id);
 
         if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new CreateCabResponse("User not found", null));
+            return ResponseEntity.status(404).body(new CreateCabResponse("User not found", null));
         }
 
         Users user = optionalUser.get();
 
         if (!user.isOwner()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new CreateCabResponse("User is not an owner", null));
+            return ResponseEntity.status(400).body(new CreateCabResponse("User is not an owner", null));
         }
 
         Cab cab = new Cab();
@@ -115,18 +61,20 @@ public class CabService {
         cab.setType(request.getType());
         cab.setFarePerKm(request.getFarePerKm());
         cab.setFarePerDay(request.getFarePerDay());
-        cab.setAvailability(false); // default value
+        cab.setAvailability(false);
         cab.setOwner(user);
 
-        Cab savedCab = repo.save(cab); // make sure this is cabRepo
+        Cab savedCab = repo.save(cab);
 
-        return ResponseEntity.ok(
-                new CreateCabResponse("Cab created successfully", savedCab.getId())
-        );
+        return ResponseEntity.ok(new CreateCabResponse("Cab created successfully", savedCab.getId()));
     }
 
-
-
+    /**
+     * Retrieves a cab by its ID with full owner and image details.
+     *
+     * @param id Cab ID
+     * @return ResponseEntity with CabResponse
+     */
     public ResponseEntity<CabResponse> findCabById(Long id) {
         Optional<Cab> optionalCab = repo.findById(id);
 
@@ -137,12 +85,12 @@ public class CabService {
         Cab cab = optionalCab.get();
         Users owner = cab.getOwner();
 
-        // Convert cab images to URLs
+        // Convert image file paths to list
         List<String> imageUrls = cab.getImages().stream()
                 .map(Image::getFilePath)
                 .toList();
 
-        // Create owner info
+        // Build owner info
         CabResponse.OwnerInfo ownerInfo = new CabResponse.OwnerInfo(
                 owner.getId(),
                 owner.getUsername(),
@@ -152,7 +100,6 @@ public class CabService {
                 owner.getProfileImage() != null ? owner.getProfileImage().getFilePath() : null
         );
 
-        // Final cab response
         CabResponse response = new CabResponse(
                 cab.getId(),
                 cab.getModel(),
@@ -168,49 +115,58 @@ public class CabService {
         return ResponseEntity.ok(response);
     }
 
-
+    /**
+     * Deletes a cab if the requesting user is the owner.
+     *
+     * @param userId ID of the user attempting deletion
+     * @param cabId  ID of the cab to delete
+     * @return ResponseEntity with status
+     */
     public ResponseEntity<SimpleApiResponse> deleteCab(Long userId, Long cabId) {
         Optional<Cab> optionalCab = repo.findById(cabId);
 
         if (optionalCab.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new SimpleApiResponse("Cab not found", false));
+            return ResponseEntity.status(404).body(new SimpleApiResponse("Cab not found", false));
         }
 
         Cab cab = optionalCab.get();
 
         if (!cab.getOwner().getId().equals(userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new SimpleApiResponse("Unauthorized. Only the owner can delete this cab", false));
+            return ResponseEntity.status(403).body(new SimpleApiResponse("Unauthorized. Only the owner can delete this cab", false));
         }
 
         repo.deleteById(cabId);
         return ResponseEntity.ok(new SimpleApiResponse("Cab deleted successfully", true));
     }
 
+    /**
+     * Updates only the changed fields of a cab if the user is the owner.
+     *
+     * @param userId  ID of the user attempting the update
+     * @param cabId   ID of the cab to update
+     * @param request Update payload
+     * @return ResponseEntity with list of updated fields
+     */
     public ResponseEntity<UpdateCabResponse> updateCab(Long userId, Long cabId, UpdateCabRequest request) {
         Optional<Cab> optionalCab = repo.findById(cabId);
 
         if (optionalCab.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new UpdateCabResponse("Cab not found", null, List.of()));
+            return ResponseEntity.status(404).body(new UpdateCabResponse("Cab not found", null, List.of()));
         }
 
         Cab cab = optionalCab.get();
 
         if (!cab.getOwner().getId().equals(userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new UpdateCabResponse("You are not the owner of this cab", cabId, List.of()));
+            return ResponseEntity.status(403).body(new UpdateCabResponse("You are not the owner of this cab", cabId, List.of()));
         }
 
-        // Now update only changed fields
         List<String> updatedFields = new ArrayList<>();
 
         if (request.getModel() != null && !request.getModel().equals(cab.getModel())) {
             cab.setModel(request.getModel());
             updatedFields.add("model");
         }
-        if (request.getSeatCapacity() != null && request.getSeatCapacity() != cab.getSeatCapacity()) {
+        if (request.getSeatCapacity() != null && !request.getSeatCapacity().equals(cab.getSeatCapacity())) {
             cab.setSeatCapacity(request.getSeatCapacity());
             updatedFields.add("seatCapacity");
         }
@@ -218,11 +174,11 @@ public class CabService {
             cab.setType(request.getType());
             updatedFields.add("type");
         }
-        if (request.getFarePerKm() != null && request.getFarePerKm() != cab.getFarePerKm()) {
+        if (request.getFarePerKm() != null && !request.getFarePerKm().equals(cab.getFarePerKm())) {
             cab.setFarePerKm(request.getFarePerKm());
             updatedFields.add("farePerKm");
         }
-        if (request.getFarePerDay() != null && request.getFarePerDay() != cab.getFarePerDay()) {
+        if (request.getFarePerDay() != null && !request.getFarePerDay().equals(cab.getFarePerDay())) {
             cab.setFarePerDay(request.getFarePerDay());
             updatedFields.add("farePerDay");
         }
@@ -240,56 +196,56 @@ public class CabService {
         );
     }
 
-
+    /**
+     * Fetches all cabs where the owner's location matches the input location.
+     *
+     * @param location source city name
+     * @return List of matching CabResponse
+     */
     public ResponseEntity<List<CabResponse>> getByLocation(String location) {
         List<Cab> cabs = repo.findByOwner_LocationIgnoreCase(location);
 
-        // Optional: Debug print all cabs
-        List<Cab> allCabs = repo.findAll();
-        for (Cab c : allCabs) {
-            System.out.println("Cab: " + c.getModel() + " | Owner location: [" + c.getOwner().getLocation() + "]");
-        }
+        List<CabResponse> responses = cabs.stream().map(cab -> {
+            List<String> imagePaths = cab.getImages().stream().map(Image::getFilePath).toList();
 
-        List<CabResponse> responses = cabs.stream()
-                .map(cab -> {
-                    // extract cab image paths
-                    List<String> imagePaths = cab.getImages()
-                            .stream()
-                            .map(Image::getFilePath)
-                            .toList();
-
-                    return new CabResponse(
-                            cab.getId(),
-                            cab.getModel(),
-                            cab.getSeatCapacity(),
-                            cab.getType(),
-                            cab.getFarePerKm(),
-                            cab.getFarePerDay(),
-                            cab.getAvailability(),
-                            imagePaths,
-                            new CabResponse.OwnerInfo(
-                                    cab.getOwner().getId(),
-                                    cab.getOwner().getUsername(),
-                                    cab.getOwner().getEmail(),
-                                    cab.getOwner().getPhone(),
-                                    cab.getOwner().getLocation(),
-                                    cab.getOwner().getProfileImage() != null
-                                            ? cab.getOwner().getProfileImage().getFilePath()
-                                            : null
-                            )
-                    );
-                })
-                .toList();
+            return new CabResponse(
+                    cab.getId(),
+                    cab.getModel(),
+                    cab.getSeatCapacity(),
+                    cab.getType(),
+                    cab.getFarePerKm(),
+                    cab.getFarePerDay(),
+                    cab.getAvailability(),
+                    imagePaths,
+                    new CabResponse.OwnerInfo(
+                            cab.getOwner().getId(),
+                            cab.getOwner().getUsername(),
+                            cab.getOwner().getEmail(),
+                            cab.getOwner().getPhone(),
+                            cab.getOwner().getLocation(),
+                            cab.getOwner().getProfileImage() != null
+                                    ? cab.getOwner().getProfileImage().getFilePath()
+                                    : null
+                    )
+            );
+        }).toList();
 
         return ResponseEntity.ok(responses);
     }
 
+    /**
+     * Toggles the availability status of a cab by its owner.
+     *
+     * @param userId ID of the user attempting the action
+     * @param cabId  ID of the cab
+     * @return ResponseEntity with new availability status
+     */
     public ResponseEntity<?> toggleCabAvailability(Long userId, Long cabId) {
         Cab cab = repo.findById(cabId)
                 .orElseThrow(() -> new RuntimeException("Cab not found"));
 
         if (!cab.getOwner().getId().equals(userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not the owner of this cab.");
+            return ResponseEntity.status(403).body("You are not the owner of this cab.");
         }
 
         cab.setAvailability(!cab.getAvailability());
@@ -297,5 +253,4 @@ public class CabService {
 
         return ResponseEntity.ok("Cab availability changed to: " + cab.getAvailability());
     }
-
 }

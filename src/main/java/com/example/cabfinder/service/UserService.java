@@ -227,12 +227,10 @@ public class UserService {
                 return ResponseEntity.badRequest().body("User is already an owner");
             }
 
-            // Parse cities JSON
             List<String> cities = new ObjectMapper().readValue(
                     citiesJson, new TypeReference<List<String>>() {}
             );
 
-            // Save profile image
             String uploadDir = "uploads/owners/" + userId + "/";
             Files.createDirectories(Paths.get(uploadDir));
 
@@ -242,15 +240,14 @@ public class UserService {
 
             Image profileImage = new Image();
             profileImage.setFilePath(filePath.toString());
-            profileImage.setOwner(user); // set backref if needed
+            profileImage.setOwner(user);
 
             // Update user
             user.setOwner(true);
             user.setCitiesProviding(cities);
             user.setProfileImage(profileImage);
 
-            // Save user and image (if image needs to be persisted separately)
-            repo.save(user); // Assuming cascade takes care of Image
+            repo.save(user);
 
             return ResponseEntity.ok(new OwnerResponse(user));
 
