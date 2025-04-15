@@ -8,7 +8,6 @@ public class CreateCabRequest {
     private CabType type;
     private double farePerKm;
     private double farePerDay;
-    private Long ownerId;
 
     public String getModel() {
         return model;
@@ -48,13 +47,5 @@ public class CreateCabRequest {
 
     public void setFarePerDay(double farePerDay) {
         this.farePerDay = farePerDay;
-    }
-
-    public Long getOwnerId() {
-        return ownerId;
-    }
-
-    public void setOwnerId(Long ownerId) {
-        this.ownerId = ownerId;
     }
 }

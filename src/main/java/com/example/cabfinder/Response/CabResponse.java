@@ -1,6 +1,7 @@
 package com.example.cabfinder.Response;
 
 import com.example.cabfinder.models.CabType;
+import java.util.List;
 
 public class CabResponse {
     private Long id;
@@ -10,11 +11,12 @@ public class CabResponse {
     private double farePerKm;
     private double farePerDay;
     private boolean availability;
+    private List<String> images;
     private OwnerInfo owner;
 
     public CabResponse(Long id, String model, int seatCapacity, CabType type,
                        double farePerKm, double farePerDay, boolean availability,
-                       OwnerInfo owner) {
+                       List<String> images, OwnerInfo owner) {
         this.id = id;
         this.model = model;
         this.seatCapacity = seatCapacity;
@@ -22,11 +24,11 @@ public class CabResponse {
         this.farePerKm = farePerKm;
         this.farePerDay = farePerDay;
         this.availability = availability;
+        this.images = images;
         this.owner = owner;
     }
 
-    // getters + setters (can use Lombok if you're using it)
-
+    // Getters and Setters
 
     public Long getId() {
         return id;
@@ -84,6 +86,14 @@ public class CabResponse {
         this.availability = availability;
     }
 
+    public List<String> getImages() {
+        return images;
+    }
+
+    public void setImages(List<String> images) {
+        this.images = images;
+    }
+
     public OwnerInfo getOwner() {
         return owner;
     }
@@ -92,24 +102,26 @@ public class CabResponse {
         this.owner = owner;
     }
 
-    // 👇 Embedded owner info class, no loop
+    // Inner static class for Owner Info
     public static class OwnerInfo {
         private Long id;
         private String username;
         private String email;
         private String phone;
         private String location;
+        private String profileImage;
 
-        public OwnerInfo(Long id, String username, String email, String phone, String location) {
+        public OwnerInfo(Long id, String username, String email, String phone,
+                         String location, String profileImage) {
             this.id = id;
             this.username = username;
             this.email = email;
             this.phone = phone;
             this.location = location;
+            this.profileImage = profileImage;
         }
 
-        // getters + setters here too
-
+        // Getters and Setters
 
         public Long getId() {
             return id;
@@ -149,6 +161,14 @@ public class CabResponse {
 
         public void setLocation(String location) {
             this.location = location;
+        }
+
+        public String getProfileImage() {
+            return profileImage;
+        }
+
+        public void setProfileImage(String profileImage) {
+            this.profileImage = profileImage;
         }
     }
 }

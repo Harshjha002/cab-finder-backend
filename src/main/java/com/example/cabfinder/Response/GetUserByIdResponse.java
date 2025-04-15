@@ -12,18 +12,28 @@ public class GetUserByIdResponse {
     private String location;
     private boolean isOwner;
 
-    private List<Cab> cabs; // Will be empty or null based on isOwner
+    private List<Cab> cabs; // Only for owners
+    private String profileImagePath; // Only for owners
+    private List<String> citiesProviding; // Only for owners
 
     public GetUserByIdResponse() {}
 
-    public GetUserByIdResponse(Long id, String username, String email, String phone, String location, boolean isOwner, List<Cab> cabs) {
+    // Constructor for normal users (non-owner)
+    public GetUserByIdResponse(Long id, String username, String email, String phone, String location, boolean isOwner) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.phone = phone;
         this.location = location;
         this.isOwner = isOwner;
+    }
+
+    // Constructor for owners
+    public GetUserByIdResponse(Long id, String username, String email, String phone, String location, boolean isOwner, List<Cab> cabs, String profileImagePath, List<String> citiesProviding) {
+        this(id, username, email, phone, location, isOwner);
         this.cabs = cabs;
+        this.profileImagePath = profileImagePath;
+        this.citiesProviding = citiesProviding;
     }
 
     // Getters & Setters
@@ -82,5 +92,21 @@ public class GetUserByIdResponse {
 
     public void setCabs(List<Cab> cabs) {
         this.cabs = cabs;
+    }
+
+    public String getProfileImagePath() {
+        return profileImagePath;
+    }
+
+    public void setProfileImagePath(String profileImagePath) {
+        this.profileImagePath = profileImagePath;
+    }
+
+    public List<String> getCitiesProviding() {
+        return citiesProviding;
+    }
+
+    public void setCitiesProviding(List<String> citiesProviding) {
+        this.citiesProviding = citiesProviding;
     }
 }

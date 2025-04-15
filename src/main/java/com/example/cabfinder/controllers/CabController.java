@@ -9,14 +9,16 @@ import com.example.cabfinder.Response.UpdateCabResponse;
 import com.example.cabfinder.models.Cab;
 import com.example.cabfinder.service.CabService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/cab")
-@CrossOrigin("http://localhost:5173/")
+@CrossOrigin("http://localhost:5173")
 public class CabController {
 
     @Autowired
@@ -29,6 +31,15 @@ public class CabController {
     }
 
     // POST: Add a cab (only if user is an owner)
+//    @PostMapping(path = "/{userId}/add-cab", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<CreateCabResponse> addCab(
+//            @PathVariable long userId,
+//            @RequestPart("cab") CreateCabRequest request,
+//            @RequestPart(value = "images", required = false) List<MultipartFile> images
+//    ) {
+//        return service.addCab(userId, request, images);
+//    }
+
     @PostMapping("/{userId}/add-cab")
     public ResponseEntity<CreateCabResponse> addCab(
             @PathVariable long userId,
@@ -36,6 +47,8 @@ public class CabController {
     ) {
         return service.addCab(userId, request);
     }
+
+
 
     // PUT: Update cab (ownership check included)
     @PutMapping("/{userId}/{cabId}/update-cab")
@@ -61,5 +74,11 @@ public class CabController {
         System.out.println("Searching cabs by location: [" + location + "]");
         return service.getByLocation(location);
     }
+
+    @PutMapping("{userId}/{cabId}/changeAbility")
+    public ResponseEntity<?> changeCabAvailability(@PathVariable Long userId, @PathVariable Long cabId) {
+        return service.toggleCabAvailability(userId, cabId);
+    }
+
 
 }

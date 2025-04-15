@@ -7,6 +7,7 @@ import com.example.cabfinder.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("api/user")
@@ -26,15 +27,8 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UpdateUserResponse> updateUser(
             @PathVariable Long id,
-            @RequestBody UpdateUserRequest request
-    ) {
+            @RequestBody UpdateUserRequest request) {
         return service.updateUser(id, request);
-    }
-
-    // 🆙 Upgrade user to owner
-    @PutMapping("/{id}/upgrade-to-owner")
-    public ResponseEntity<SimpleApiResponse> updateToOwner(@PathVariable long id) {
-        return service.updateToOwner(id);
     }
 
     // 📝 Register new user
@@ -47,5 +41,28 @@ public class UserController {
     @PostMapping("/sign-in")
     public ResponseEntity<SignInResponse> signin(@RequestBody SignInRequest request) {
         return service.signin(request);
+    }
+
+    // 📸 Upload profile image + cities (owner flow)
+    @PostMapping("/{userId}/become-owner")
+    public ResponseEntity<?> upgradeToOwner(
+            @PathVariable Long userId,
+            @RequestParam("profileImage") MultipartFile profileImage,
+            @RequestParam("cities") String citiesJson) {
+        return service.upgradeToOwner(userId, profileImage, citiesJson);
+    }
+
+    // 📸 Update profile image separately
+    @PostMapping("/{userId}/update-profile-image")
+    public ResponseEntity<?> updateProfileImage(
+            @PathVariable Long userId,
+            @RequestPart("file") MultipartFile file) {
+        return service.updateProfileImage(userId, file);
+    }
+
+    // 👤 Get owner info
+    @GetMapping("/owner/{id}")
+    public ResponseEntity<OwnerResponse> getOwner(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getOwnerById(id));
     }
 }

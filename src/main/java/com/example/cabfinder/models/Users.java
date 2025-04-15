@@ -2,6 +2,8 @@ package com.example.cabfinder.models;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -15,27 +17,53 @@ public class Users {
     private String email;
     private String phone;
     private String location;
+
     private boolean isOwner = false;
+    private String role = "USER"; // Default role
     private String password;
+
+    // Store profile image path (not as an entity)
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "profile_image_id")
+    private Image profileImage;
+
+
+    @ElementCollection
+    private List<String> citiesProviding = new ArrayList<>();
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<Cab> cabs;
+    private List<Cab> cabs = new ArrayList<>();
 
-    public Users() {}
+    // --- Constructors ---
 
-    public Users(Long id, String username, String email, String phone, String location, boolean isOwner, String password, List<Cab> cabs) {
+    public Users() {
+    }
+
+    public Users(Long id, String username, String email, String phone, String location, boolean isOwner, String role, String password, Image profileImage, List<String> citiesProviding, List<Cab> cabs) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.phone = phone;
         this.location = location;
         this.isOwner = isOwner;
+        this.role = role;
         this.password = password;
+        this.profileImage = profileImage;
+        this.citiesProviding = citiesProviding;
         this.cabs = cabs;
     }
 
-    // Getters and Setters...
+    // --- Getters & Setters ---
+
+
+    public List<Cab> getCabs() {
+        return cabs;
+    }
+
+    public void setCabs(List<Cab> cabs) {
+        this.cabs = cabs;
+    }
 
     public Long getId() {
         return id;
@@ -85,6 +113,14 @@ public class Users {
         isOwner = owner;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public String getPassword() {
         return password;
     }
@@ -93,11 +129,19 @@ public class Users {
         this.password = password;
     }
 
-    public List<Cab> getCabs() {
-        return cabs;
+    public Image getProfileImage() {
+        return profileImage;
     }
 
-    public void setCabs(List<Cab> cabs) {
-        this.cabs = cabs;
+    public void setProfileImage(Image profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public List<String> getCitiesProviding() {
+        return citiesProviding;
+    }
+
+    public void setCitiesProviding(List<String> citiesProviding) {
+        this.citiesProviding = citiesProviding;
     }
 }

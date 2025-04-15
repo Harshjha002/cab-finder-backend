@@ -1,42 +1,35 @@
 package com.example.cabfinder.Response;
 
-import com.example.cabfinder.models.Cab;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.example.cabfinder.models.Image;
+import com.example.cabfinder.models.Users;
 
 import java.util.List;
+import java.util.Optional;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class SignInResponse {
-
+public class OwnerResponse {
     private Long id;
     private String username;
     private String email;
     private String phone;
     private String location;
-    private boolean isOwner;
-
-    private List<Cab> cabs;
     private String profileImagePath;
+
     private List<String> citiesProviding;
 
-    public SignInResponse() {}
-
-    public SignInResponse(Long id, String username, String email, String phone, String location, boolean isOwner) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.phone = phone;
-        this.location = location;
-        this.isOwner = isOwner;
+    public OwnerResponse(Users user) {
+        this.id = user.getId();
+        this.username = user.getUsername();
+        this.email = user.getEmail();
+        this.phone = user.getPhone();
+        this.location = user.getLocation();
+        this.profileImagePath = user.getProfileImage() != null
+                ? user.getProfileImage().getFilePath()
+                : null;
+        // ✅ fixed here
+        this.citiesProviding = user.getCitiesProviding();
     }
 
-    public SignInResponse(Long id, String username, String email, String phone, String location, boolean isOwner,
-                          List<Cab> cabs, String profileImagePath, List<String> citiesProviding) {
-        this(id, username, email, phone, location, isOwner);
-        this.cabs = cabs;
-        this.profileImagePath = profileImagePath;
-        this.citiesProviding = citiesProviding;
-    }
+    // Getters and Setters
 
     public Long getId() {
         return id;
@@ -76,22 +69,6 @@ public class SignInResponse {
 
     public void setLocation(String location) {
         this.location = location;
-    }
-
-    public boolean isOwner() {
-        return isOwner;
-    }
-
-    public void setOwner(boolean owner) {
-        isOwner = owner;
-    }
-
-    public List<Cab> getCabs() {
-        return cabs;
-    }
-
-    public void setCabs(List<Cab> cabs) {
-        this.cabs = cabs;
     }
 
     public String getProfileImagePath() {

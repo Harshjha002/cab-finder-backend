@@ -1,5 +1,8 @@
 package com.example.cabfinder.service;
 
+import com.example.cabfinder.models.Image;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import com.example.cabfinder.Repo.UserRepo;
 import com.example.cabfinder.Requests.RegisterUserRequest;
 import com.example.cabfinder.Requests.SignInRequest;
@@ -7,14 +10,22 @@ import com.example.cabfinder.Requests.UpdateUserRequest;
 import com.example.cabfinder.Response.*;
 import com.example.cabfinder.models.Cab;
 import com.example.cabfinder.models.Users;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -53,7 +64,7 @@ public class UserService {
         if (optionalUser.isEmpty()) {
             return ResponseEntity
                     .badRequest()
-                    .body(null); // or a custom error response
+                    .body(null);
         }
 
         Users user = optionalUser.get();
@@ -61,11 +72,14 @@ public class UserService {
         if (!user.getPassword().equals(request.getPassword())) {
             return ResponseEntity
                     .badRequest()
-                    .body(null); // or return a message like "Invalid password"
+                    .body(null);
         }
 
         if (user.isOwner()) {
-            List<Cab> cabs = user.getCabs(); // assuming mapped properly
+            List<Cab> cabs = user.getCabs();
+            String profileImagePath = user.getProfileImage() != null ? user.getProfileImage().getFilePath() : null;
+            List<String> cities = user.getCitiesProviding();
+
             return ResponseEntity.ok(
                     new SignInResponse(
                             user.getId(),
@@ -74,7 +88,9 @@ public class UserService {
                             user.getPhone(),
                             user.getLocation(),
                             true,
-                            cabs
+                            cabs,
+                            profileImagePath,
+                            cities
                     )
             );
         } else {
@@ -91,6 +107,7 @@ public class UserService {
         }
     }
 
+
     public ResponseEntity<GetUserByIdResponse> findUserById(Long id) {
         Optional<Users> userOpt = repo.findById(id);
 
@@ -100,24 +117,37 @@ public class UserService {
 
         Users user = userOpt.get();
 
-        List<Cab> cabs = user.isOwner() ? user.getCabs() : null;
-        if (cabs == null) {
-            cabs = List.of(); // Return empty list if owner but has no cabs
+        if (user.isOwner()) {
+            List<Cab> cabs = user.getCabs() != null ? user.getCabs() : List.of();
+            String profileImagePath = user.getProfileImage() != null ? user.getProfileImage().getFilePath() : null;
+            List<String> cities = user.getCitiesProviding() != null ? user.getCitiesProviding() : List.of();
+
+            GetUserByIdResponse response = new GetUserByIdResponse(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getPhone(),
+                    user.getLocation(),
+                    true,
+                    cabs,
+                    profileImagePath,
+                    cities
+            );
+
+            return ResponseEntity.ok(response);
+        } else {
+            GetUserByIdResponse response = new GetUserByIdResponse(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getPhone(),
+                    user.getLocation(),
+                    false
+            );
+
+            return ResponseEntity.ok(response);
         }
-
-        GetUserByIdResponse response = new GetUserByIdResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getPhone(),
-                user.getLocation(),
-                user.isOwner(),
-                user.isOwner() ? cabs : null
-        );
-
-        return ResponseEntity.ok(response);
     }
-
 
 
     public ResponseEntity<UpdateUserResponse> updateUser(Long id, UpdateUserRequest request) {
@@ -168,24 +198,102 @@ public class UserService {
         return ResponseEntity.ok(response);
     }
 
-    public ResponseEntity<SimpleApiResponse> updateToOwner(long id) {
-        Optional<Users> optionalUser = repo.findById(id);
+//    public ResponseEntity<SimpleApiResponse> updateToOwner(long id) {
+//        Optional<Users> optionalUser = repo.findById(id);
+//
+//        if (optionalUser.isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body(new SimpleApiResponse("User not found", false));
+//        }
+//
+//        Users user = optionalUser.get();
+//
+//        if (user.isOwner()) {
+//            return ResponseEntity.ok(new SimpleApiResponse("User is already an owner", false));
+//        }
+//
+//        user.setOwner(true);
+//        repo.save(user);
+//
+//        return ResponseEntity.ok(new SimpleApiResponse("User upgraded to owner successfully", true));
+//    }
 
-        if (optionalUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new SimpleApiResponse("User not found", false));
+    public ResponseEntity<?> upgradeToOwner(Long userId, MultipartFile file, String citiesJson) {
+        try {
+            Users user = repo.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            if (user.isOwner()) {
+                return ResponseEntity.badRequest().body("User is already an owner");
+            }
+
+            // Parse cities JSON
+            List<String> cities = new ObjectMapper().readValue(
+                    citiesJson, new TypeReference<List<String>>() {}
+            );
+
+            // Save profile image
+            String uploadDir = "uploads/owners/" + userId + "/";
+            Files.createDirectories(Paths.get(uploadDir));
+
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path filePath = Paths.get(uploadDir + fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            Image profileImage = new Image();
+            profileImage.setFilePath(filePath.toString());
+            profileImage.setOwner(user); // set backref if needed
+
+            // Update user
+            user.setOwner(true);
+            user.setCitiesProviding(cities);
+            user.setProfileImage(profileImage);
+
+            // Save user and image (if image needs to be persisted separately)
+            repo.save(user); // Assuming cascade takes care of Image
+
+            return ResponseEntity.ok(new OwnerResponse(user));
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
         }
-
-        Users user = optionalUser.get();
-
-        if (user.isOwner()) {
-            return ResponseEntity.ok(new SimpleApiResponse("User is already an owner", false));
-        }
-
-        user.setOwner(true);
-        repo.save(user);
-
-        return ResponseEntity.ok(new SimpleApiResponse("User upgraded to owner successfully", true));
     }
 
+
+
+
+    public ResponseEntity<?> updateProfileImage(Long userId, MultipartFile file) {
+        Users user = repo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String uploadDir = "uploads/owners/" + userId + "/";
+        try {
+            Files.createDirectories(Paths.get(uploadDir));
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path path = Paths.get(uploadDir + fileName);
+            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+            Image profileImage = new Image();
+            profileImage.setFilePath(path.toString());
+            profileImage.setOwner(user);
+
+            user.setProfileImage(profileImage);
+            repo.save(user);
+
+            return ResponseEntity.ok("Profile image updated successfully");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Image upload failed: " + e.getMessage());
+        }
+    }
+
+
+    public OwnerResponse getOwnerById(Long id) {
+        Users user = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        return new OwnerResponse(user);
+    }
 }

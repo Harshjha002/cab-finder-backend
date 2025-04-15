@@ -12,9 +12,6 @@ public class CreateCabResponse {
         this.cabId = cabId;
     }
 
-    // Getters and Setters
-
-
     public String getMessage() {
         return message;
     }

@@ -2,6 +2,11 @@ package com.example.cabfinder.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class Cab {
@@ -19,19 +24,23 @@ public class Cab {
     private double farePerKm;
     private double farePerDay;
 
-    private boolean availability = false; // default to false
+    private boolean availability = false;
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
     @JsonBackReference
     private Users owner;
 
+    @OneToMany(mappedBy = "cab", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Image> images = new ArrayList<>();
 
-    // No-args constructor
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
     public Cab() {}
 
-    // All-args constructor
-    public Cab(Long id, String model, int seatCapacity, CabType type, double farePerKm, double farePerDay, boolean availability, Users owner) {
+    public Cab(Long id, String model, int seatCapacity, CabType type, double farePerKm,
+               double farePerDay, boolean availability, Users owner) {
         this.id = id;
         this.model = model;
         this.seatCapacity = seatCapacity;
@@ -43,69 +52,45 @@ public class Cab {
     }
 
     // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public void setId(Long id) { this.id = id; }
 
-    public String getModel() {
-        return model;
-    }
+    public String getModel() { return model; }
 
-    public void setModel(String model) {
-        this.model = model;
-    }
+    public void setModel(String model) { this.model = model; }
 
-    public int getSeatCapacity() {
-        return seatCapacity;
-    }
+    public int getSeatCapacity() { return seatCapacity; }
 
-    public void setSeatCapacity(int seatCapacity) {
-        this.seatCapacity = seatCapacity;
-    }
+    public void setSeatCapacity(int seatCapacity) { this.seatCapacity = seatCapacity; }
 
-    public CabType getType() {
-        return type;
-    }
+    public CabType getType() { return type; }
 
-    public void setType(CabType type) {
-        this.type = type;
-    }
+    public void setType(CabType type) { this.type = type; }
 
-    public double getFarePerKm() {
-        return farePerKm;
-    }
+    public double getFarePerKm() { return farePerKm; }
 
-    public void setFarePerKm(double farePerKm) {
-        this.farePerKm = farePerKm;
-    }
+    public void setFarePerKm(double farePerKm) { this.farePerKm = farePerKm; }
 
-    public double getFarePerDay() {
-        return farePerDay;
-    }
+    public double getFarePerDay() { return farePerDay; }
 
-    public void setFarePerDay(double farePerDay) {
-        this.farePerDay = farePerDay;
-    }
+    public void setFarePerDay(double farePerDay) { this.farePerDay = farePerDay; }
 
-    public boolean getAvailability() {
-        return availability;
-    }
+    public boolean getAvailability() { return availability; }
 
-    public void setAvailability(boolean availability) {
-        this.availability = availability;
-    }
+    public void setAvailability(boolean availability) { this.availability = availability; }
 
-    public Users getOwner() {
-        return owner;
-    }
+    public Users getOwner() { return owner; }
 
-    public void setOwner(Users owner) {
-        this.owner = owner;
-    }
+    public void setOwner(Users owner) { this.owner = owner; }
+
+    public List<Image> getImages() { return images; }
+
+    public void setImages(List<Image> images) { this.images = images; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     @Override
     public String toString() {
